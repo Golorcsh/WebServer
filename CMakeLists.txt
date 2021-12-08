@@ -1,7 +1,5 @@
-cmake_minimum_required(VERSION 3.22)
+cmake_minimum_required(VERSION 3.2)
 project(WebServer)
-
 set(CMAKE_CXX_STANDARD 14)
-
-aux_source_directory(src SRC)
-add_executable(WebServer  main.cpp ${SRC})
+aux_source_directory(${PROJECT_SOURCE_DIR}/src SOURCE_FILE)
+add_executable(WebServer main.cpp ${SOURCE_FILE})
