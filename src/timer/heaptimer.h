@@ -30,6 +30,7 @@ struct TimerNode {
 };
 
 class HeapTimer {
+ public:
   HeapTimer() { heap_.resize(64); }
   ~HeapTimer() { Clear(); };
   void Adjust(int id, int timeout);
