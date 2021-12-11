@@ -17,6 +17,7 @@
 #include "../pool/sqlpoolRAII.h"
 
 class HttpRequest {
+ public:
   enum PARSE_STATE {
     REQUEST_LINE,
     HEADERS,
