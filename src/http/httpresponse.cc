@@ -4,6 +4,8 @@
 
 #include "httpresponse.h"
 
+#include <utility>
+
 const std::unordered_map<std::string, std::string> HttpResponse::SUFFIX_TYPE = {
     {".html", "text/html"},
     {".xml", "text/xml"},
@@ -51,8 +53,9 @@ void HttpResponse::Init(const std::string &srcDir, std::string path, bool isKeep
   if (mmFile_) {
     UnmapFile();
   }
+  code_ = code;
   isKeepAlive_ = isKeepAlive;
-  path_ = path;
+  path_ = std::move(path);
   srcDir_ = srcDir;
   mmFile_ = nullptr;
   mmFileStat_ = {0};
