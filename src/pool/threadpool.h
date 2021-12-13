@@ -11,6 +11,7 @@
 #include <queue>
 #include <cassert>
 class ThreadPool {
+ public:
   explicit ThreadPool(size_t threadCount = 0) : pool_(std::make_shared<Pool>()) {
     assert(threadCount > 0);
     /*使用lambada表达式做为worker函数*/
