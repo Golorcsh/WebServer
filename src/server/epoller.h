@@ -18,9 +18,9 @@ class Epoller {
   explicit Epoller(int maxEvents = 1024);
   ~Epoller();
 
-  bool AddFd(int fd, uint32_t events);
-  bool ModFd(int fd, uint32_t events);
-  bool DelFd(int fd, uint32_t events);
+  bool AddFd(int fd, uint32_t events) const;
+  bool ModFd(int fd, uint32_t events) const;
+  bool DelFd(int fd, uint32_t events) const;
   int Wait(int timeoutMs = -1);
   int GetEventFd(size_t i) const;
   uint32_t GetEvents(size_t i) const;
