@@ -8,23 +8,26 @@ Buffer::Buffer(int init_buffer_size) : buffer_(init_buffer_size), readPos_(0), w
 }
 /*buffer_中可写字节数*/
 size_t Buffer::WriteableBytes() const {
-  return writePos_ - readPos_;
+  return buffer_.size() - writePos_;
 }
 /*buffer_中可以读入字节数*/
 size_t Buffer::ReadableBytes() const {
-  return buffer_.size() - writePos_;
+  return writePos_ - readPos_;
 }
 /*可预留的字节数*/
 size_t Buffer::PrependableBytes() const {
   return readPos_;
 }
+/*返回当前读指针的位置*/
 const char *Buffer::Peek() const {
   return BeginPtr() + readPos_;
 }
+/*从当前读指针的位置，移动len长度，表示不要len长度的数据*/
 void Buffer::Retrieve(size_t len) {
   assert(len <= ReadableBytes());
   readPos_ += len;
 }
+/*从当前都指针位置，移动end位置*/
 void Buffer::RetrieveUntil(const char *end) {
   assert(Peek() <= end);
   Retrieve(end - Peek());
@@ -41,22 +44,28 @@ std::string Buffer::RetrieveAllToStr() {
   RetrieveAll();
   return str;
 }
+/*返回开始写入的位置，const版本*/
 const char *Buffer::BeginWriteConst() const {
   return BeginPtr() + writePos_;
 }
+/*返回开始写入的位置，非const版本*/
 char *Buffer::BeginWrite() {
   return BeginPtr() + writePos_;
 }
+/*从当前写指针位置移动len长度，表示已经写入len长度的内容*/
 void Buffer::HasWritten(size_t len) {
   writePos_ += len;
 }
+/*往buffer中append数据，接受string类型，然后调用重载Append插入函数*/
 void Buffer::Append(const std::string &str) {
   Append(str.data(), str.length());
 }
+/*重载版本Append函数，将void类型转为char*类型，调用重载版本Append函数*/
 void Buffer::Append(const void *data, size_t len) {
   assert(data);
   Append(static_cast<const char *>(data), len);
 }
+/*实际执行插入的Append函数*/
 void Buffer::Append(const char *str, size_t len) {
   assert(str);
   EnsureWriteable(len);
@@ -67,13 +76,14 @@ void Buffer::Append(const char *str, size_t len) {
 void Buffer::Append(const Buffer &buff) {
   Append(buff.Peek(), buff.ReadableBytes());
 }
+/*确保有足够的空间可以写入*/
 void Buffer::EnsureWriteable(size_t len) {
-  /*确保有足够的空间可以写入*/
   if (WriteableBytes() < len) {/*空间不够就重新分配空间*/
     MakeSpace_(len);
   }
   assert(WriteableBytes() >= len);
 }
+//从文件描述附中读取数据写入到buffer中
 ssize_t Buffer::ReadFD(int fd, int *Errno) {
   /*从fd中读取数据，已块的方式读取，分为两个块*/
   char buff[65535];
@@ -95,6 +105,7 @@ ssize_t Buffer::ReadFD(int fd, int *Errno) {
   }
   return len;
 }
+//从buffer中读取数据然后向文件描述符中写入
 ssize_t Buffer::WriteFD(int fd, int *Erron) {
   /*向fd中写入数据*/
   size_t readable = ReadableBytes();
@@ -113,6 +124,7 @@ const char *Buffer::BeginPtr() const {
   return &*buffer_.begin();
 }
 void Buffer::MakeSpace_(size_t len) {
+  //还可以写入的空间和已经读取的空间的总共空间还是小于len,则需要分配空间
   if (WriteableBytes() + PrependableBytes() < len) {
     buffer_.resize(writePos_ + len + 1);
   } else {
