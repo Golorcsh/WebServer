@@ -60,7 +60,7 @@ void HttpRequest::ParsePath_() {
   if (path_ == "/") {
     path_ = "/index.html";
   } else {
-    for (const auto &item : DEFAULT_HTML) {
+    for (const auto &item: DEFAULT_HTML) {
       if (item == path_) {
         path_ += ".html";
         break;
@@ -166,6 +166,7 @@ bool HttpRequest::UserVerify(const std::string &name, const std::string &pwd, bo
   assert(sql);
 
   bool flag = false;
+  unsigned int j = 0;
   char order[256] = {0};
   MYSQL_FIELD *fields = nullptr;
   MYSQL_RES *res = nullptr;
@@ -183,7 +184,7 @@ bool HttpRequest::UserVerify(const std::string &name, const std::string &pwd, bo
   /*取出查询结果集放到res*/
   res = mysql_store_result(sql);
   /*查询结果的列数*/
-  mysql_num_fields(res);
+  j = mysql_num_fields(res);
   fields = mysql_fetch_field(res);
   /*获取一行数据*/
   while (MYSQL_ROW row = mysql_fetch_row(res)) {

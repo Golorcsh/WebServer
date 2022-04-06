@@ -40,6 +40,7 @@ class HttpResponse {
   std::string srcDir_;
 
   char *mmFile_;
+  //用于存放文件的状态
   struct stat mmFileStat_;
 
   static const std::unordered_map<std::string, std::string> SUFFIX_TYPE;

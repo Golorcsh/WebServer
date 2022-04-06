@@ -69,6 +69,3 @@ SqlPool::~SqlPool() {
   ClosePool();
 }
 
-
-
-
