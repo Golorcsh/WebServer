@@ -26,7 +26,7 @@ bool Epoller::ModFd(int fd, uint32_t events) const {
   return 0 == epoll_ctl(epollFd_, EPOLL_CTL_MOD, fd, &ev);
 }
 //epoll中删除事件
-bool Epoller::DelFd(int fd, uint32_t events) const {
+bool Epoller::DelFd(int fd) const {
   if (fd < 0)return false;
   return 0 == epoll_ctl(epollFd_, EPOLL_CTL_DEL, fd, nullptr);
 }
