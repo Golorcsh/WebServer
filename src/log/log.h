@@ -8,10 +8,10 @@
 #include <string>
 #include <thread>
 #include <sys/time.h>
-#include <cstring>
-#include <cstdarg>
-#include <cassert>
-#include <sys/stat.h>
+#include <string.h>
+#include <stdarg.h>           // vastart va_end
+#include <assert.h>
+#include <sys/stat.h>         //mkdir
 #include "blockdeque.h"
 #include "../buffer/buffer.h"
 class Log {
@@ -30,16 +30,16 @@ class Log {
   void SetLevel(int level);
   bool IsOpen() {
     return isOpen_;
-  };
+  }
  private:
   Log();
   void AppendLogLevelTitle_(int level);
   virtual ~Log();
-  void AsyncWrite();
+  void AsyncWrite_();
  private:
   static const int LOG_PATH_LEN = 256;
   static const int LOG_NAME_LEN = 256;
-  static const int MAX_LINE = 50000;
+  static const int MAX_LINES = 50000;
 
   const char *path_;
   const char *suffix_;
@@ -65,8 +65,8 @@ class Log {
   do{\
       Log* log = Log::Instance();\
       if(log->IsOpen()&&log->GetLevel()<=level){\
-      log->Write(level,format,##__VA_ARGS__);\
-      log->Flush();\
+            log->Write(level, format, ##__VA_ARGS__); \
+            log->Flush();\
       }\
     }while(0);
 
