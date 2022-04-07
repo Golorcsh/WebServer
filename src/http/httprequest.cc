@@ -3,10 +3,12 @@
 //
 
 #include "httprequest.h"
-const std::unordered_set<std::string>HttpRequest::DEFAULT_HTML{
+using namespace std;
+
+const unordered_set<string>HttpRequest::DEFAULT_HTML{
     "/index", "/register", "/login", "/welcome", "/video", "/picture"
 };
-const std::unordered_map<std::string, int>HttpRequest::DEFAULT_HTML_TAG{
+const unordered_map<string, int>HttpRequest::DEFAULT_HTML_TAG{
     {"/register.html", 0}, {"/login.html", 1}
 };
 void HttpRequest::Init() {
@@ -30,9 +32,9 @@ bool HttpRequest::Parse(Buffer &buff) {
   }
   while (buff.ReadableBytes() && state_ != FINISH) {
     /*在buff找到第一个CRLF即一行的结束符号*/
-    const char *lineEnd = std::search(buff.Peek(), buff.BeginWriteConst(), CRLF, CRLF + 2);
+    const char *lineEnd = search(buff.Peek(), buff.BeginWriteConst(), CRLF, CRLF + 2);
     /*获取一行*/
-    std::string line(buff.Peek(), lineEnd);
+    string line(buff.Peek(), lineEnd);
     switch (state_) {
       case REQUEST_LINE:
         if (!ParseRequestLine(line)) {
@@ -69,10 +71,10 @@ void HttpRequest::ParsePath_() {
   }
 }
 
-bool HttpRequest::ParseRequestLine(const std::string &line) {
-  std::regex pattern("^([^ ]*) ([^ ]*) HTTP/([^ ]*)$");
-  std::smatch subMatch;
-  if (std::regex_match(line, subMatch, pattern)) {
+bool HttpRequest::ParseRequestLine(const string &line) {
+  regex pattern("^([^ ]*) ([^ ]*) HTTP/([^ ]*)$");
+  smatch subMatch;
+  if (regex_match(line, subMatch, pattern)) {
     /*[0]是整个匹配成功的字符串*/
     method_ = subMatch[1];
     path_ = subMatch[2];
@@ -83,17 +85,17 @@ bool HttpRequest::ParseRequestLine(const std::string &line) {
   LOG_ERROR("RequestLine Error")
   return false;
 }
-void HttpRequest::ParseHeader_(const std::string &line) {
-  std::regex pattern("^([^:]*): ?(.*)$");
-  std::smatch subMatch;
-  if (std::regex_match(line, subMatch, pattern)) {
+void HttpRequest::ParseHeader_(const string &line) {
+  regex pattern("^([^:]*): ?(.*)$");
+  smatch subMatch;
+  if (regex_match(line, subMatch, pattern)) {
     header_[subMatch[1]] = subMatch[2];
   } else {
     state_ = BODY;
   }
 }
 
-void HttpRequest::ParseBody_(const std::string &line) {
+void HttpRequest::ParseBody_(const string &line) {
   body_ = line;
   ParsePost_();
   state_ = FINISH;
@@ -126,7 +128,7 @@ void HttpRequest::ParsePost_() {
 void HttpRequest::ParseFromUrlencoded_() {
   /*解析post请求提交的数据，通常格式是key=value&key=value*/
   if (body_.empty()) { return; }
-  std::string key, value;
+  string key, value;
   int num;
   int n = body_.size();
   int i = 0, j = 0;
@@ -158,9 +160,9 @@ void HttpRequest::ParseFromUrlencoded_() {
     post_[key] = value;
   }
 }
-bool HttpRequest::UserVerify(const std::string &name, const std::string &pwd, bool isLogin) {
-  if (name.empty() || pwd.empty()) { return false; }
-  LOG_INFO("Verify name:%s pwd:%s", name.c_str(), pwd.c_str())
+bool HttpRequest::UserVerify(const string &name, const string &pwd, bool isLogin) {
+  if (name == "" || pwd == "") { return false; }
+  LOG_INFO("Verify name:%s pwd:%s", name.c_str(), pwd.c_str());
   MYSQL *sql;
   SqlPoolRAII(&sql, SqlPool::Instance());
   assert(sql);
@@ -171,7 +173,7 @@ bool HttpRequest::UserVerify(const std::string &name, const std::string &pwd, bo
   MYSQL_FIELD *fields = nullptr;
   MYSQL_RES *res = nullptr;
 
-  if (!isLogin) { flag = true; };
+  if (!isLogin) { flag = true; }
   /*查询用户密码*/
   snprintf(order, 256, "SELECT username,password FROM user WHERE username='%s' LIMIT 1", name.c_str());
   LOG_DEBUG("%s", order);
@@ -185,11 +187,11 @@ bool HttpRequest::UserVerify(const std::string &name, const std::string &pwd, bo
   res = mysql_store_result(sql);
   /*查询结果的列数*/
   j = mysql_num_fields(res);
-  fields = mysql_fetch_field(res);
+  fields = mysql_fetch_fields(res);
   /*获取一行数据*/
   while (MYSQL_ROW row = mysql_fetch_row(res)) {
-    LOG_DEBUG("MYSQL ROW：%s %s", row[0], row[1]);
-    std::string password(row[1]);
+    LOG_DEBUG("MYSQL ROW:%s %s", row[0], row[1]);
+    string password(row[1]);
     /*登录行为*/
     if (isLogin) {
       if (pwd == password) { flag = true; }
@@ -206,12 +208,12 @@ bool HttpRequest::UserVerify(const std::string &name, const std::string &pwd, bo
 
   /*注册账号*/
   if (!isLogin && flag) {
-    LOG_DEBUG("register!")
+    LOG_DEBUG("register!");
     bzero(order, 256);
     snprintf(order, 256, "INSERT INTO user(username,password) VALUES('%s','%s')", name.c_str(), pwd.c_str());
-    LOG_DEBUG("%s", order)
+    LOG_DEBUG("%s", order);
     if (mysql_query(sql, order)) {
-      LOG_DEBUG("Insert error!")
+      LOG_DEBUG("Insert error!");
       flag = false;
     }
     flag = true;
@@ -220,26 +222,26 @@ bool HttpRequest::UserVerify(const std::string &name, const std::string &pwd, bo
   LOG_DEBUG("UserVerify success!");
   return flag;
 }
-std::string HttpRequest::Path() const {
+string HttpRequest::Path() const {
   return path_;
 }
-std::string &HttpRequest::Path() {
+string &HttpRequest::Path() {
   return path_;
 }
-std::string HttpRequest::Method() const {
+string HttpRequest::Method() const {
   return method_;
 }
-std::string HttpRequest::Version() const {
+string HttpRequest::Version() const {
   return version_;
 }
-std::string HttpRequest::GetPost(const std::string &key) const {
+string HttpRequest::GetPost(const string &key) const {
   assert(!key.empty());
   if (post_.count(key) == 1) {
     return post_.at(key);
   }
   return "";
 }
-std::string HttpRequest::GetPost(const char *key) const {
+string HttpRequest::GetPost(const char *key) const {
   assert(key != nullptr);
   if (post_.count(key) == 1) {
     return post_.at(key);
