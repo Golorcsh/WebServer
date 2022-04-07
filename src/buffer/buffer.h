@@ -4,19 +4,19 @@
 
 #ifndef WEBSERVER_SRC_BUFFER_H_
 #define WEBSERVER_SRC_BUFFER_H_
-#include <cstring>/*perror*/
+#include <cstring>   //perror
 #include <iostream>
-#include <unistd.h>/*write*/
-#include <sys/uio.h>/*readv 块读取*/
-#include <vector>
+#include <unistd.h>  // write
+#include <sys/uio.h> //readv
+#include <vector> //readv
 #include <atomic>
-#include <cassert>
+#include <assert.h>
 class Buffer {
  public:
-  explicit Buffer(int init_buffer_size = 1024);
+  Buffer(int initBuffSize = 1024);
   ~Buffer() = default;
 
-  size_t WriteableBytes() const;
+  size_t WritableBytes() const;
   size_t ReadableBytes() const;
   size_t PrependableBytes() const;
 
@@ -38,11 +38,11 @@ class Buffer {
   void Append(const void *data, size_t len);
   void Append(const Buffer &buff);
 
-  ssize_t ReadFD(int fd, int *Errno);
-  ssize_t WriteFD(int fd, int *Erron);
+  ssize_t ReadFd(int fd, int *Errno);
+  ssize_t WriteFd(int fd, int *Errno);
  private:
-  char *BeginPtr();
-  const char *BeginPtr() const;
+  char *BeginPtr_();
+  const char *BeginPtr_() const;
   void MakeSpace_(size_t len);
 
   std::vector<char> buffer_;

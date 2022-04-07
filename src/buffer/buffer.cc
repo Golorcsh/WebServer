@@ -6,13 +6,13 @@
 Buffer::Buffer(int init_buffer_size) : buffer_(init_buffer_size), readPos_(0), writePos_(0) {
 
 }
-/*buffer_中可写字节数*/
-size_t Buffer::WriteableBytes() const {
-  return buffer_.size() - writePos_;
-}
 /*buffer_中可以读入字节数*/
 size_t Buffer::ReadableBytes() const {
   return writePos_ - readPos_;
+}
+/*buffer_中可写字节数*/
+size_t Buffer::WritableBytes() const {
+  return buffer_.size() - writePos_;
 }
 /*可预留的字节数*/
 size_t Buffer::PrependableBytes() const {
@@ -20,7 +20,7 @@ size_t Buffer::PrependableBytes() const {
 }
 /*返回当前读指针的位置*/
 const char *Buffer::Peek() const {
-  return BeginPtr() + readPos_;
+  return BeginPtr_() + readPos_;
 }
 /*从当前读指针的位置，移动len长度，表示不要len长度的数据*/
 void Buffer::Retrieve(size_t len) {
@@ -46,11 +46,11 @@ std::string Buffer::RetrieveAllToStr() {
 }
 /*返回开始写入的位置，const版本*/
 const char *Buffer::BeginWriteConst() const {
-  return BeginPtr() + writePos_;
+  return BeginPtr_() + writePos_;
 }
 /*返回开始写入的位置，非const版本*/
 char *Buffer::BeginWrite() {
-  return BeginPtr() + writePos_;
+  return BeginPtr_() + writePos_;
 }
 /*从当前写指针位置移动len长度，表示已经写入len长度的内容*/
 void Buffer::HasWritten(size_t len) {
@@ -78,59 +78,59 @@ void Buffer::Append(const Buffer &buff) {
 }
 /*确保有足够的空间可以写入*/
 void Buffer::EnsureWriteable(size_t len) {
-  if (WriteableBytes() < len) {/*空间不够就重新分配空间*/
+  if (WritableBytes() < len) {/*空间不够就重新分配空间*/
     MakeSpace_(len);
   }
-  assert(WriteableBytes() >= len);
+  assert(WritableBytes() >= len);
 }
 //从文件描述附中读取数据写入到buffer中
-ssize_t Buffer::ReadFD(int fd, int *Errno) {
+ssize_t Buffer::ReadFd(int fd, int *Errno) {
   /*从fd中读取数据，已块的方式读取，分为两个块*/
   char buff[65535];
   struct iovec iov[2];
-  const size_t writeable = WriteableBytes();
-  /*分散读，保证数据全部读取完*/
-  iov[0].iov_base = BeginPtr() + writePos_;
-  iov[0].iov_len = writeable;
+  const size_t writable = WritableBytes();
+  /* 分散读， 保证数据全部读完 */
+  iov[0].iov_base = BeginPtr_() + writePos_;
+  iov[0].iov_len = writable;
   iov[1].iov_base = buff;
   iov[1].iov_len = sizeof(buff);
   const ssize_t len = readv(fd, iov, 2);
   if (len < 0) {
     *Errno = errno;
-  } else if (static_cast<size_t>(len) <= writeable) {/*buffer_足够的，则直接写入*/
+  } else if (static_cast<size_t>(len) <= writable) {/*buffer_足够的，则直接写入*/
     writePos_ += len;
   } else {/*buffer_不够大，则将剩余的通过Append方法写入（append方法会自动扩容）*/
     writePos_ = buffer_.size();
-    Append(buff, len - writeable);
+    Append(buff, len - writable);
   }
   return len;
 }
 //从buffer中读取数据然后向文件描述符中写入
-ssize_t Buffer::WriteFD(int fd, int *Erron) {
+ssize_t Buffer::WriteFd(int fd, int *Errno) {
   /*向fd中写入数据*/
-  size_t readable = ReadableBytes();
-  ssize_t len = write(fd, Peek(), readable);
+  size_t readSize = ReadableBytes();
+  ssize_t len = write(fd, Peek(), readSize);
   if (len < 0) {
-    *Erron = errno;
+    *Errno = errno;
     return len;
   }
   readPos_ += len;
   return len;
 }
-char *Buffer::BeginPtr() {
+char *Buffer::BeginPtr_() {
   return &*buffer_.begin();
 }
-const char *Buffer::BeginPtr() const {
+const char *Buffer::BeginPtr_() const {
   return &*buffer_.begin();
 }
 void Buffer::MakeSpace_(size_t len) {
   //还可以写入的空间和已经读取的空间的总共空间还是小于len,则需要分配空间
-  if (WriteableBytes() + PrependableBytes() < len) {
+  if (WritableBytes() + PrependableBytes() < len) {
     buffer_.resize(writePos_ + len + 1);
   } else {
     /*将还未读取的数据buffer[readOps,writeOps]，移动到buffer的开头，更新读写位置*/
     size_t readable = ReadableBytes();
-    std::copy(BeginPtr() + readPos_, BeginPtr() + writePos_, BeginPtr());
+    std::copy(BeginPtr_() + readPos_, BeginPtr_() + writePos_, BeginPtr_());
     readPos_ = 0;
     writePos_ = readPos_ + readable;
     assert(readable == ReadableBytes());
