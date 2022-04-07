@@ -3,6 +3,9 @@
 //
 
 #include "webserver.h"
+
+using namespace std;
+
 WebServer::WebServer(
     int port, int trigMode, int timeoutMS, bool OptLinger,
     int sqlPort, const char *sqlUser, const char *sqlPwd,
@@ -15,7 +18,7 @@ WebServer::WebServer(
   strncat(srcDir_, "/resources/", 16);
   HttpConn::userCount = 0;
   HttpConn::srcDir = srcDir_;
-  SqlPool::Instance()->Init("localhost", sqlPort, sqlUser, sqlPwd, dbName, connPoolNum);
+  SqlConnPool::Instance()->Init("localhost", sqlPort, sqlUser, sqlPwd, dbName, connPoolNum);
 
   InitEventMode_(trigMode);
   if (!InitSocket_()) { isClose_ = true; }
@@ -38,7 +41,7 @@ WebServer::~WebServer() {
   close(listenFd_);
   isClose_ = true;
   free(srcDir_);
-  SqlPool::Instance()->ClosePool();
+  SqlConnPool::Instance()->ClosePool();
 }
 void WebServer::InitEventMode_(int trigMode) {
   listenEvent_ = EPOLLRDHUP;
@@ -59,7 +62,7 @@ void WebServer::InitEventMode_(int trigMode) {
   HttpConn::isET = (connEvent_ & EPOLLET);
 }
 void WebServer::Start() {
-  int timeMS = -1;  /*epoll wait timeout ==-1 无事件阻塞*/
+  int timeMS = -1;  /* epoll wait timeout == -1 无事件将阻塞 */
   if (!isClose_) { LOG_INFO("========== Server start =========="); }
   while (!isClose_) {
     if (timeoutMS_ > 0) {
@@ -109,7 +112,7 @@ void WebServer::AddClient_(int fd, sockaddr_in addr) {
   users_[fd].Init(fd, addr);
   if (timeoutMS_ > 0) {
     //使用bind将CloseConn和users_[fd]绑定作为定时器的回调函数
-    timer_->Add(fd, timeoutMS_, std::bind(&WebServer::CloseConn_, this, &users_[fd]));
+    timer_->add(fd, timeoutMS_, std::bind(&WebServer::CloseConn_, this, &users_[fd]));
   }
   epoller_->AddFd(fd, EPOLLIN | connEvent_);
   SetFdNoneBlock(fd);
@@ -144,7 +147,7 @@ void WebServer::DealWrite_(HttpConn *client) {
 void WebServer::ExtentTime_(HttpConn *client) {
   assert(client);
   /*延长事件超时时间*/
-  if (timeoutMS_ > 0) { timer_->Adjust(client->GetFd(), timeoutMS_); }
+  if (timeoutMS_ > 0) { timer_->adjust(client->GetFd(), timeoutMS_); }
 }
 void WebServer::OnRead_(HttpConn *client) {
   assert(client);
@@ -155,9 +158,9 @@ void WebServer::OnRead_(HttpConn *client) {
     CloseConn_(client);
     return;
   }
-  OnProcess_(client);
+  OnProcess(client);
 }
-void WebServer::OnProcess_(HttpConn *client) {
+void WebServer::OnProcess(HttpConn *client) {
   if (client->Process()) {
     epoller_->ModFd(client->GetFd(), connEvent_ | EPOLLOUT);
   } else {
@@ -172,10 +175,10 @@ void WebServer::OnWrite_(HttpConn *client) {
   if (client->ToWriteBytes() == 0) {
     /*传输完成*/
     if (client->IsKeepAlive()) {
-      OnProcess_(client);
+      OnProcess(client);
       return;
     }
-  } else if (ret <= 0) {
+  } else if (ret < 0) {
     if (writeErrno == EAGAIN) {
       /*继续传输*/
       epoller_->ModFd(client->GetFd(), connEvent_ | EPOLLOUT);
@@ -238,7 +241,7 @@ bool WebServer::InitSocket_() {
   }
   ret = epoller_->AddFd(listenFd_, listenEvent_ | EPOLLIN);
   if (ret == 0) {
-    LOG_ERROR("Add listen error!");
+    LOG_ERROR("add listen error!");
     close(listenFd_);
     return false;
   }

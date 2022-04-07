@@ -6,12 +6,12 @@
 #define WEBSERVER_SRC_HEAPTIMER_H_
 #include <queue>
 #include <unordered_map>
+#include <time.h>
 #include <algorithm>
-#include <ctime>
 #include <arpa/inet.h>
-#include <cassert>
 #include <functional>
-#include <chrono>/*处理事件和日期*/
+#include <assert.h>
+#include <chrono>
 #include "../log/log.h"
 
 using TimeoutCallBack = std::function<void()>;
@@ -25,26 +25,26 @@ struct TimerNode {
   TimeStamp expires;
   TimeoutCallBack cb;
   bool operator<(const TimerNode &t) const {/*重载比大小*/
-    return expires > t.expires;
+    return expires < t.expires;
   }
 };
 
 class HeapTimer {
  public:
-  HeapTimer() { heap_.resize(64); }
-  ~HeapTimer() { Clear(); };
-  void Adjust(int id, int timeout);
-  void Add(int id, int timeOut, const TimeoutCallBack &call_back);
-  void DoWork(int id);
-  void Clear();
-  void Tick();
-  void Pop();
+  HeapTimer() { heap_.reserve(64); }
+  ~HeapTimer() { clear(); }
+  void adjust(int id, int timeout);
+  void add(int id, int timeout, const TimeoutCallBack &cb);
+  void doWork(int id);
+  void clear();
+  void tick();
+  void pop();
   int GetNextTick();
  private:
-  void del_(size_t index);
-  void siftup(size_t i);
+  void del_(size_t i);
+  void siftup_(size_t i);
   bool siftdown_(size_t index, size_t n);
-  void SwapNode(size_t i, size_t j);
+  void SwapNode_(size_t i, size_t j);
   /*使用vector做为队列(配合hashtable)而不使用priority_queue*/
   /*这更方便调整*/
   std::vector<TimerNode> heap_;

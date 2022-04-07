@@ -5,10 +5,10 @@
 #ifndef WEBSERVER_SRC_SERVER_WEBSERVER_H_
 #define WEBSERVER_SRC_SERVER_WEBSERVER_H_
 #include <unordered_map>
-#include <fcntl.h>
-#include <unistd.h>
-#include <cassert>
-#include <cerrno>
+#include <fcntl.h>       // fcntl()
+#include <unistd.h>      // close()
+#include <assert.h>
+#include <errno.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -45,7 +45,7 @@ class WebServer {
 
   void OnRead_(HttpConn *client);
   void OnWrite_(HttpConn *client);
-  void OnProcess_(HttpConn *client);
+  void OnProcess(HttpConn *client);
 
   static const int MAX_FD = 65536;
 
@@ -53,7 +53,7 @@ class WebServer {
 
   int port_;
   bool openLinger_;
-  int timeoutMS_;
+  int timeoutMS_;  /* 毫秒MS */
   bool isClose_;
   int listenFd_;
   char *srcDir_;

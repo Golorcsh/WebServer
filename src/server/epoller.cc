@@ -4,13 +4,13 @@
 
 #include "epoller.h"
 Epoller::Epoller(int maxEvents) : epollFd_(epoll_create(512)), events_(maxEvents) {
-  assert(epollFd_ >= 0 && !events_.empty());
+  assert(epollFd_ >= 0 && events_.size() > 0);
 }
 Epoller::~Epoller() {
   close(epollFd_);
 }
 //epoll中添加事件
-bool Epoller::AddFd(int fd, uint32_t events) const {
+bool Epoller::AddFd(int fd, uint32_t events) {
   if (fd < 0)return false;
   epoll_event ev = {0};
   ev.data.fd = fd;
@@ -18,7 +18,7 @@ bool Epoller::AddFd(int fd, uint32_t events) const {
   return 0 == epoll_ctl(epollFd_, EPOLL_CTL_ADD, fd, &ev);
 }
 //epoll中修改事件
-bool Epoller::ModFd(int fd, uint32_t events) const {
+bool Epoller::ModFd(int fd, uint32_t events) {
   if (fd < 0)return false;
   epoll_event ev = {0};
   ev.data.fd = fd;
@@ -26,9 +26,10 @@ bool Epoller::ModFd(int fd, uint32_t events) const {
   return 0 == epoll_ctl(epollFd_, EPOLL_CTL_MOD, fd, &ev);
 }
 //epoll中删除事件
-bool Epoller::DelFd(int fd) const {
+bool Epoller::DelFd(int fd) {
   if (fd < 0)return false;
-  return 0 == epoll_ctl(epollFd_, EPOLL_CTL_DEL, fd, nullptr);
+  epoll_event ev = {0};
+  return 0 == epoll_ctl(epollFd_, EPOLL_CTL_DEL, fd, &ev);
 }
 //阻塞epoll
 int Epoller::Wait(int timeoutMs) {

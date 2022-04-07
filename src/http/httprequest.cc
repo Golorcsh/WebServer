@@ -164,7 +164,7 @@ bool HttpRequest::UserVerify(const string &name, const string &pwd, bool isLogin
   if (name == "" || pwd == "") { return false; }
   LOG_INFO("Verify name:%s pwd:%s", name.c_str(), pwd.c_str());
   MYSQL *sql;
-  SqlPoolRAII(&sql, SqlPool::Instance());
+  SqlConnRAII(&sql, SqlConnPool::Instance());
   assert(sql);
 
   bool flag = false;
@@ -218,7 +218,7 @@ bool HttpRequest::UserVerify(const string &name, const string &pwd, bool isLogin
     }
     flag = true;
   }
-  SqlPool::Instance()->FreeConn(sql);
+  SqlConnPool::Instance()->FreeConn(sql);
   LOG_DEBUG("UserVerify success!");
   return flag;
 }

@@ -12,12 +12,12 @@
 #include <thread>
 #include "../log/log.h"
 
-class SqlPool {
+class SqlConnPool {
  public:
-  static SqlPool *Instance();
+  static SqlConnPool *Instance();
 
   MYSQL *GetConn();
-  void FreeConn(MYSQL *sql);
+  void FreeConn(MYSQL *conn);
   int GetFreeConnCount();
 
   void Init(const char *host, int port,
@@ -25,8 +25,8 @@ class SqlPool {
             const char *dbName, int connSize);
   void ClosePool();
  private:
-  SqlPool();
-  ~SqlPool();
+  SqlConnPool();
+  ~SqlConnPool();
 
   int max_conn_;/*最大连接数*/
   int use_count_;/*已使用连接数*/

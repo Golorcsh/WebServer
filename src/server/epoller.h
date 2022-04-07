@@ -6,21 +6,25 @@
 #ifndef WEBSERVER_SRC_SERVER_EPOLLER_H_
 #define WEBSERVER_SRC_SERVER_EPOLLER_H_
 
-#include <sys/epoll.h>/*epoll*/
-#include <fcntl.h>/*fcntl*/
-#include <unistd.h>/*close*/
-#include <cassert>
+#include <sys/epoll.h> //epoll_ctl()
+#include <fcntl.h>  // fcntl()
+#include <unistd.h> // close()
+#include <assert.h> // close()
 #include <vector>
-#include <cerrno>
+#include <errno.h>
 
 class Epoller {
  public:
-  explicit Epoller(int maxEvents = 1024);
+    explicit Epoller(int maxEvent = 1024);
+
   ~Epoller();
 
-  bool AddFd(int fd, uint32_t events) const;
-  bool ModFd(int fd, uint32_t events) const;
-  bool DelFd(int fd) const;
+    bool AddFd(int fd, uint32_t events);
+
+    bool ModFd(int fd, uint32_t events);
+
+    bool DelFd(int fd);
+
   int Wait(int timeoutMs = -1);
   int GetEventFd(size_t i) const;
   uint32_t GetEvents(size_t i) const;
