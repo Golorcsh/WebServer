@@ -132,7 +132,7 @@ void Log::Write(int level, const char *format, ...) {
 
     /*写入format和可变参数*/
     va_start(va_list, format);
-    int m = vsnprintf(buff_.BeginWrite(), buff_.WriteableBytes(), format, va_list);
+    int m = vsnprintf(buff_.BeginWrite(), buff_.WritableBytes(), format, va_list);
     va_end(va_list);
 
     buff_.HasWritten(m);

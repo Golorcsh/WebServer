@@ -3,6 +3,7 @@
 //
 
 #include "httpconn.h"
+using namespace std;
 
 const char *HttpConn::srcDir;
 std::atomic<int> HttpConn::userCount;
@@ -24,15 +25,15 @@ void HttpConn::Init(int sockFd, const sockaddr_in &addr) {
   writeBuff_.RetrieveAll();
   readBuff_.RetrieveAll();
   isClose_ = false;
-  LOG_INFO("Client[%d](%s:%d) in ,userCount:%d", fd_, GetIP(), GetPort(), (int) userCount)
+  LOG_INFO("Client[%d](%s:%d) in ,userCount:%d", fd_, GetIP(), GetPort(), (int) userCount);
 }
 void HttpConn::Close() {
   response_.UnmapFile();
-  if (!isClose_) {
+  if (isClose_ == false) {
     isClose_ = true;
     userCount--;
     close(fd_);
-    LOG_INFO("Client[%d](%s:%d) quit ,userCount:%d", fd_, GetIP(), GetPort(), (int) userCount)
+    LOG_INFO("Client[%d](%s:%d) quit, UserCount:%d", fd_, GetIP(), GetPort(), (int) userCount);
   }
 }
 int HttpConn::GetFd() const {
@@ -51,7 +52,7 @@ ssize_t HttpConn::Read(int *saveErrno) {
   /*从fd_中读取内容到readBuff中*/
   ssize_t len = -1;
   do {
-    len = readBuff_.ReadFD(fd_, saveErrno);
+    len = readBuff_.ReadFd(fd_, saveErrno);
     if (len <= 0) {
       break;
     }
@@ -67,10 +68,10 @@ ssize_t HttpConn::Write(int *saveErrno) {
       *saveErrno = errno;
       break;
     }
-    if (iov_[0].iov_len + iov_[1].iov_len == 0) { break; }/*没有数据，传输结束*/
-    else if (static_cast<size_t>(len) > iov_[0].iov_len) {/*写入的数据大于第一个块，但还没完全写入*/
-      iov_[1].iov_base = (uint8_t *) iov_[1].iov_base + (len - iov_[0].iov_len);/*将指针移动到还未写的地方*/
-      iov_[1].iov_len -= (len - iov_[0].iov_len);/*更新剩余的长度*/
+    if (iov_[0].iov_len + iov_[1].iov_len == 0) { break; } /* 传输结束 */
+    else if (static_cast<size_t>(len) > iov_[0].iov_len) {
+      iov_[1].iov_base = (uint8_t *) iov_[1].iov_base + (len - iov_[0].iov_len);
+      iov_[1].iov_len -= (len - iov_[0].iov_len);
       if (iov_[0].iov_len) {
         writeBuff_.RetrieveAll();
         iov_[0].iov_len = 0;
