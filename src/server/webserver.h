@@ -23,7 +23,7 @@
 
 class WebServer {
  public:
-  WebServer(int port, int trigMode, int timeoutMs, bool OptLinger,
+  WebServer(int port, int trigMode, int timeoutMS, bool OptLinger,
             int sqlPort, const char *sqlUser, const char *sqlPwd,
             const char *dbName, int connPoolNum, int threadNum,
             bool openLog, int logLevel, int logQueSize);
@@ -39,7 +39,7 @@ class WebServer {
   void DealWrite_(HttpConn *client);
   void DealRead_(HttpConn *client);
 
-  void SendError(int fd, const char *info);
+  void SendError_(int fd, const char *info);
   void ExtentTime_(HttpConn *client);
   void CloseConn_(HttpConn *client);
 
@@ -49,11 +49,11 @@ class WebServer {
 
   static const int MAX_FD = 65536;
 
-  static int SetFdNoneBlocking(int fd);
+  static int SetFdNoneBlock(int fd);
 
   int port_;
   bool openLinger_;
-  int timeoutMs_;
+  int timeoutMS_;
   bool isClose_;
   int listenFd_;
   char *srcDir_;
@@ -61,10 +61,14 @@ class WebServer {
   uint32_t listenEvent_;
   uint32_t connEvent_;
 
+  //使用智能指针管理定时器堆
   std::unique_ptr<HeapTimer> timer_;
+  //使用智能指针管理线程池
   std::unique_ptr<ThreadPool> threadpool_;
+  //使用智能指针管理封装好的epoll
   std::unique_ptr<Epoller> epoller_;
-  std::unordered_map<int, HttpConn> user_;
+  //key为fd,value为对应的链接
+  std::unordered_map<int, HttpConn> users_;
 };
 
 #endif //WEBSERVER_SRC_SERVER_WEBSERVER_H_
