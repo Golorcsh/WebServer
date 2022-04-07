@@ -1,10 +1,14 @@
 cmake_minimum_required(VERSION 3.2)
 project(WebServer)
 set(CMAKE_CXX_STANDARD 14)
+# 设置可执行文件输出的目录
+set(EXECUTABLE_OUTPUT_PATH  ${PROJECT_SOURCE_DIR}/../bin)
 # 获得目录下所有的cc文件
 file(GLOB_RECURSE SOURCE_FILE ./*.cc)
 
 add_executable(WebServer main.cpp ${SOURCE_FILE})
+
+
 #mysql所需的头文件和库所需的目录和库文件可以用/usr/bin/mysql_config来查看
 include_directories("/usr/include/mysql")
 link_directories("usr/lib/x86_64-linux-gnu")
