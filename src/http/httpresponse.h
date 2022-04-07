@@ -5,10 +5,10 @@
 #ifndef WEBSERVER_SRC_HTTP_HTTPRESPONSE_H_
 #define WEBSERVER_SRC_HTTP_HTTPRESPONSE_H_
 #include <unordered_map>
-#include <unistd.h> /*close*/
-#include <fcntl.h>
-#include <sys/stat.h> /*close*/
-#include <sys/mman.h> /*mmap,unmap,将一段内存映射到内核空间*/
+#include <fcntl.h>       // open
+#include <unistd.h>      // close
+#include <sys/stat.h>    // stat
+#include <sys/mman.h>    // mmap, munmap
 
 #include "../buffer/buffer.h"
 #include "../log/log.h"
@@ -18,12 +18,12 @@ class HttpResponse {
   HttpResponse();
   ~HttpResponse();
 
-  void Init(const std::string &srcDir, std::string path, bool isKeepAlive = false, int code = -1);
+  void Init(const std::string &srcDir, std::string &path, bool isKeepAlive = false, int code = -1);
   void MakeResponse(Buffer &buff);
   void UnmapFile();
   char *File();
   size_t FileLen() const;
-  void ErrorContent(Buffer &buff, const std::string &message);
+  void ErrorContent(Buffer &buff, std::string message);
   int Code() const { return code_; }
  private:
   void AddStateLine_(Buffer &buff);

@@ -4,9 +4,9 @@
 
 #include "httpresponse.h"
 
-#include <utility>
+using namespace std;
 
-const std::unordered_map<std::string, std::string> HttpResponse::SUFFIX_TYPE = {
+const unordered_map<string, string> HttpResponse::SUFFIX_TYPE = {
     {".html", "text/html"},
     {".xml", "text/xml"},
     {".xhtml", "application/xhtml+xml"},
@@ -27,13 +27,15 @@ const std::unordered_map<std::string, std::string> HttpResponse::SUFFIX_TYPE = {
     {".css", "text/css "},
     {".js", "text/javascript "},
 };
-const std::unordered_map<int, std::string> HttpResponse::CODE_STATUS = {
+
+const unordered_map<int, string> HttpResponse::CODE_STATUS = {
     {200, "OK"},
     {400, "Bad Request"},
     {403, "Forbidden"},
     {404, "Not Found"},
 };
-const std::unordered_map<int, std::string> HttpResponse::CODE_PATH = {
+
+const unordered_map<int, string> HttpResponse::CODE_PATH = {
     {400, "/400.html"},
     {403, "/403.html"},
     {404, "/404.html"},
@@ -48,14 +50,14 @@ HttpResponse::HttpResponse() {
 HttpResponse::~HttpResponse() {
   UnmapFile();
 }
-void HttpResponse::Init(const std::string &srcDir, std::string path, bool isKeepAlive, int code) {
-  assert(!srcDir.empty());
+void HttpResponse::Init(const string &srcDir, string &path, bool isKeepAlive, int code) {
+    assert(srcDir != "");
   if (mmFile_) {
     UnmapFile();
   }
   code_ = code;
   isKeepAlive_ = isKeepAlive;
-  path_ = std::move(path);
+    path_ = path;
   srcDir_ = srcDir;
   mmFile_ = nullptr;
   mmFileStat_ = {0};
@@ -91,15 +93,15 @@ void HttpResponse::ErrorHtml_() {
   }
 }
 void HttpResponse::AddStateLine_(Buffer &buff) {
-  std::string status;
+  string status;
   if (CODE_STATUS.count(code_) == 1) {
     status = CODE_STATUS.find(code_)->second;
   } else {
     code_ = 400;
-    status = CODE_STATUS.find(code_)->second;
+    status = CODE_STATUS.find(400)->second;
   }
   /*缓存中写入 响应状态行*/
-  buff.Append("HTTP/1.1 " + std::to_string(code_) + " " + status + "\r\n");
+  buff.Append("HTTP/1.1 " + to_string(code_) + " " + status + "\r\n");
 }
 void HttpResponse::AddHeader_(Buffer &buff) {
   buff.Append("Connection: ");
@@ -119,8 +121,8 @@ void HttpResponse::AddContent_(Buffer &buff) {
   }
   /*将文件映射到内核中，提高文件的访问速度
    * MAP_PRIVATE 建立一个写入时拷贝的私有映射,即在内存映射区写入，不会影响到文件本身*/
-  LOG_DEBUG("file path %s", (srcDir_ + path_).data())
-  int *mmRet = (int *) mmap(nullptr, mmFileStat_.st_size, PROT_READ, MAP_PRIVATE, srcFd, 0);
+  LOG_DEBUG("file path %s", (srcDir_ + path_).data());
+  int *mmRet = (int *) mmap(0, mmFileStat_.st_size, PROT_READ, MAP_PRIVATE, srcFd, 0);
   if (*mmRet == -1) {
     /*映射失败*/
     ErrorContent(buff, "File Not Found!");
@@ -128,7 +130,7 @@ void HttpResponse::AddContent_(Buffer &buff) {
   }
   mmFile_ = (char *) mmRet;
   close(srcFd);
-  buff.Append("Content-length: " + std::to_string(mmFileStat_.st_size) + "\r\n\r\n");
+  buff.Append("Content-length: " + to_string(mmFileStat_.st_size) + "\r\n\r\n");
 }
 void HttpResponse::UnmapFile() {
   if (mmFile_) {
@@ -136,22 +138,22 @@ void HttpResponse::UnmapFile() {
     mmFile_ = nullptr;
   }
 }
-std::string HttpResponse::GetFileType_() {
+string HttpResponse::GetFileType_() {
   /*判断文件类型*/
   /*找到最有一个'.'出现的位置*/
-  std::string::size_type idx = path_.find_last_of('.');
-  if (idx == std::string::npos) {
+  string::size_type idx = path_.find_last_of('.');
+  if (idx == string::npos) {
     return "text/plain";
   }
-  std::string suffix = path_.substr(idx);
+  string suffix = path_.substr(idx);
   if (SUFFIX_TYPE.count(suffix) == 1) {
     return SUFFIX_TYPE.find(suffix)->second;
   }
   return "text/plain";
 }
-void HttpResponse::ErrorContent(Buffer &buff, const std::string &message) {
-  std::string body;
-  std::string status;
+void HttpResponse::ErrorContent(Buffer &buff, string message) {
+  string body;
+  string status;
   body += "<html><title>Error</title>";
   body += "<body bgcolor=\"ffffff\">";
   if (CODE_STATUS.count(code_) == 1) {
@@ -159,10 +161,10 @@ void HttpResponse::ErrorContent(Buffer &buff, const std::string &message) {
   } else {
     status = "Bad Request";
   }
-  body += std::to_string(code_) + " : " + status + "\n";
+  body += to_string(code_) + " : " + status + "\n";
   body += "<p>" + message + "</p>";
   body += "<hr><em>TinyWebServer</em></body></html>";
 
-  buff.Append("Content-length: " + std::to_string(body.size()) + "\r\n\r\n");
+  buff.Append("Content-length: " + to_string(body.size()) + "\r\n\r\n");
   buff.Append(body);
 }
