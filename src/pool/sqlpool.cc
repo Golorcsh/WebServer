@@ -33,7 +33,7 @@ void SqlPool::Init(const char *host, int port,
   sem_init(&semId_, 0, max_conn_);
 }
 MYSQL *SqlPool::GetConn() {
-  MYSQL *sql;
+  MYSQL *sql = nullptr;
   if (conn_queue_.empty()) {
     LOG_WARN("SqlPool busy!")
     return nullptr;
