@@ -74,13 +74,13 @@ void HeapTimer::Del(size_t i) {
   /*删除指定位置的节点*/
   assert(!heap_.empty() && i >= 0 && i < heap_.size());
   /*将要删除的节点换到堆尾部，然后调整*/
-  size_t i = i;
+  size_t j = i;
   size_t n = heap_.size() - 1;
-  assert(i <= n);
-  if (i < n) {
-    SwapNode(i, n);
-    if (!Siftdown(i, n)) {
-      Siftup(i);
+  assert(j <= n);
+  if (j < n) {
+    SwapNode(j, n);
+    if (!Siftdown(j, n)) {
+      Siftup(j);
     }
   }
   /*删除索引和移除元素*/
