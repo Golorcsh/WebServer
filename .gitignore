@@ -1,3 +1,5 @@
 /cmake-build-debug
 .idea
-/test
+test
+bin
+lib
