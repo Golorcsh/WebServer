@@ -162,9 +162,9 @@ void HttpRequest::ParseFromUrlencoded_() {
 bool HttpRequest::UserVerify(const string &name, const string &pwd, bool isLogin) {
   if (name.empty() || pwd.empty()) { return false; }
   LOG_INFO("Verify name:%s pwd:%s", name.c_str(), pwd.c_str())
-  MYSQL *sql = nullptr;
-  SqlConnRAII raii(&sql, SqlPool::Instance());
-  assert(sql != nullptr);
+  MYSQL *sql;
+  SqlConnRAII (&sql, SqlPool::Instance());
+  assert(sql);
 
   bool flag = false;
   char order[256] = {0};
@@ -205,7 +205,7 @@ bool HttpRequest::UserVerify(const string &name, const string &pwd, bool isLogin
   mysql_free_result(res);
 
   /*注册账号*/
-  if (!isLogin && flag) {
+  if (!isLogin && flag==true) {
     LOG_DEBUG("register!")
     bzero(order, 256);
     snprintf(order, 256, "INSERT INTO user(username,password) VALUES('%s','%s')", name.c_str(), pwd.c_str());
