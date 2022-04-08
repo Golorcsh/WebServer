@@ -5,7 +5,7 @@
 #include "httprequest.h"
 
 const unordered_set<string>HttpRequest::DEFAULT_HTML{
-    "/index", "/register", "/login", "/welcome", "/video", "/picture"
+    "/index", "/register", "/registersuccess", "/login", "/loginsuccess", "/welcome", "/video", "/picture"
 };
 const unordered_map<string, int>HttpRequest::DEFAULT_HTML_TAG{
     {"/register.html", 0}, {"/login.html", 1}
@@ -114,9 +114,9 @@ void HttpRequest::ParsePost_() {
       int tag = DEFAULT_HTML_TAG.find(path_)->second;
       LOG_DEBUG("Tag:%d", tag)
       if (tag == 0 || tag == 1) {
-        bool isLogin = (tag == 1);/*判断是否是登录请求*/
+        bool isLogin = (tag == 1);/*判断是否是登录页面的请求*/
         if (UserVerify(post_["username"], post_["password"], isLogin)) {
-          path_ = "/welcome.html";
+          path_ = isLogin ? "/loginsuccess.html" : "/registersuccess.html";
         } else {
           path_ = "/error.html";
         }
@@ -163,7 +163,7 @@ bool HttpRequest::UserVerify(const string &name, const string &pwd, bool isLogin
   if (name.empty() || pwd.empty()) { return false; }
   LOG_INFO("Verify name:%s pwd:%s", name.c_str(), pwd.c_str())
   MYSQL *sql;
-  SqlConnRAII  raii(&sql, SqlPool::Instance());
+  SqlConnRAII raii(&sql, SqlPool::Instance());
   assert(sql);
 
   bool flag = false;
