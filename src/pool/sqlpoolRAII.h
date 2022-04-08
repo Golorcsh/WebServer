@@ -10,19 +10,19 @@
 /*Resource Acquisition Is Initialization*/
 class SqlConnRAII {
  public:
-  SqlConnRAII(MYSQL **sql, SqlConnPool *connpool) {
-    assert(connpool);
-    *sql = connpool->GetConn();
+  SqlConnRAII(MYSQL **sql, SqlPool *sql_pool) {
+    assert(sql_pool);
+    *sql = sql_pool->GetConn();
     sql_ = *sql;
-    connpool_ = connpool;
+    sql_pool_ = sql_pool;
   }
 
   /*若获取了资源，当析构时执行释放资源*/
   ~SqlConnRAII() {
-    if (sql_) { connpool_->FreeConn(sql_); }
+    if (sql_) { sql_pool_->FreeConn(sql_); }
   }
  private:
   MYSQL *sql_;
-  SqlConnPool *connpool_;
+  SqlPool *sql_pool_;
 };
 #endif //WEBSERVER_SRC_POOL_SQLPOOLRAII_H_

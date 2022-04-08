@@ -16,7 +16,7 @@
 #include "../buffer/buffer.h"
 #include "httprequest.h"
 #include "httpresponse.h"
-
+using namespace std;
 class HttpConn {
  public:
   HttpConn();
@@ -41,19 +41,19 @@ class HttpConn {
     return request_.IsKeepAlive();
   }
 
-  static bool isET;
-  static const char *srcDir;
-  static std::atomic<int> userCount;
+  static bool is_et_;
+  static const char *src_dir_;
+  static std::atomic<int> user_count_;
 
  private:
   int fd_;
   struct sockaddr_in addr_;
-  bool isClose_;
-  int iovCnt_;
+  bool is_close_;
+  int iov_cnt_;
   struct iovec iov_[2];
 
-  Buffer readBuff_;/*读缓冲区*/
-  Buffer writeBuff_;/*写缓冲区*/
+  Buffer read_buff_;/*读缓冲区*/
+  Buffer write_buff_;/*写缓冲区*/
 
   HttpRequest request_;
   HttpResponse response_;

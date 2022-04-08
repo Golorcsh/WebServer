@@ -27,7 +27,7 @@ class ThreadPool {
             locker.unlock();
             task();
             locker.lock();
-          } else if (pool->isClosed) break;
+          } else if (pool->is_closed_) break;
           else pool->cond.wait(locker);
         }
       }).detach();
@@ -39,7 +39,7 @@ class ThreadPool {
     if (static_cast<bool>(pool_)) {
       {
         std::lock_guard<std::mutex> locker(pool_->mtx);
-        pool_->isClosed = true;
+        pool_->is_closed_ = true;
       }
       pool_->cond.notify_all();/*唤醒所有线程，让线程自行销毁*/
     }
@@ -56,7 +56,7 @@ class ThreadPool {
   struct Pool {
     std::mutex mtx;
     std::condition_variable cond;
-    bool isClosed;
+    bool is_closed_{};
     std::queue<std::function<void()>> tasks;
   };
   std::shared_ptr<Pool> pool_;

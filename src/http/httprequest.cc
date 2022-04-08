@@ -3,7 +3,6 @@
 //
 
 #include "httprequest.h"
-using namespace std;
 
 const unordered_set<string>HttpRequest::DEFAULT_HTML{
     "/index", "/register", "/login", "/welcome", "/video", "/picture"
@@ -164,7 +163,7 @@ bool HttpRequest::UserVerify(const string &name, const string &pwd, bool isLogin
   if (name == "" || pwd == "") { return false; }
   LOG_INFO("Verify name:%s pwd:%s", name.c_str(), pwd.c_str());
   MYSQL *sql;
-  SqlConnRAII(&sql, SqlConnPool::Instance());
+  SqlConnRAII(&sql, SqlPool::Instance());
   assert(sql);
 
   bool flag = false;
@@ -218,7 +217,7 @@ bool HttpRequest::UserVerify(const string &name, const string &pwd, bool isLogin
     }
     flag = true;
   }
-  SqlConnPool::Instance()->FreeConn(sql);
+  SqlPool::Instance()->FreeConn(sql);
   LOG_DEBUG("UserVerify success!");
   return flag;
 }

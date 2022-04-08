@@ -8,14 +8,14 @@
 #include <unordered_set>
 #include <string>
 #include <regex>
-#include <errno.h>
+#include <cerrno>
 #include <mysql/mysql.h>
 
 #include "../buffer/buffer.h"
 #include "../log/log.h"
 #include "../pool/sqlpool.h"
 #include "../pool/sqlpoolRAII.h"
-
+using namespace std;
 class HttpRequest {
  public:
   enum PARSE_STATE {

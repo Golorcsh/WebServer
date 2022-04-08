@@ -3,29 +3,29 @@
 //
 
 #include "buffer.h"
-Buffer::Buffer(int init_buffer_size) : buffer_(init_buffer_size), readPos_(0), writePos_(0) {
+Buffer::Buffer(int init_buffer_size) : buffer_(init_buffer_size), read_pos_(0), write_pos_(0) {
 
 }
 /*buffer_中可以读入字节数*/
 size_t Buffer::ReadableBytes() const {
-  return writePos_ - readPos_;
+  return write_pos_ - read_pos_;
 }
 /*buffer_中可写字节数*/
 size_t Buffer::WritableBytes() const {
-  return buffer_.size() - writePos_;
+  return buffer_.size() - write_pos_;
 }
 /*可预留的字节数*/
 size_t Buffer::PrependableBytes() const {
-  return readPos_;
+  return read_pos_;
 }
 /*返回当前读指针的位置*/
 const char *Buffer::Peek() const {
-  return BeginPtr_() + readPos_;
+  return BeginPtr_() + read_pos_;
 }
 /*从当前读指针的位置，移动len长度，表示不要len长度的数据*/
 void Buffer::Retrieve(size_t len) {
   assert(len <= ReadableBytes());
-  readPos_ += len;
+  read_pos_ += len;
 }
 /*从当前都指针位置，移动end位置*/
 void Buffer::RetrieveUntil(const char *end) {
@@ -35,8 +35,8 @@ void Buffer::RetrieveUntil(const char *end) {
 /*将buffer中都给置空，读写置空*/
 void Buffer::RetrieveAll() {
   bzero(&buffer_[0], buffer_.size());
-  readPos_ = 0;
-  writePos_ = 0;
+  read_pos_ = 0;
+  write_pos_ = 0;
 }
 /*将Peek位置开始的数据读取转换为string,清空buffer*/
 std::string Buffer::RetrieveAllToStr() {
@@ -46,15 +46,15 @@ std::string Buffer::RetrieveAllToStr() {
 }
 /*返回开始写入的位置，const版本*/
 const char *Buffer::BeginWriteConst() const {
-  return BeginPtr_() + writePos_;
+  return BeginPtr_() + write_pos_;
 }
 /*返回开始写入的位置，非const版本*/
 char *Buffer::BeginWrite() {
-  return BeginPtr_() + writePos_;
+  return BeginPtr_() + write_pos_;
 }
 /*从当前写指针位置移动len长度，表示已经写入len长度的内容*/
 void Buffer::HasWritten(size_t len) {
-  writePos_ += len;
+  write_pos_ += len;
 }
 /*往buffer中append数据，接受string类型，然后调用重载Append插入函数*/
 void Buffer::Append(const std::string &str) {
@@ -90,7 +90,7 @@ ssize_t Buffer::ReadFd(int fd, int *Errno) {
   struct iovec iov[2];
   const size_t writable = WritableBytes();
   /* 分散读， 保证数据全部读完 */
-  iov[0].iov_base = BeginPtr_() + writePos_;
+  iov[0].iov_base = BeginPtr_() + write_pos_;
   iov[0].iov_len = writable;
   iov[1].iov_base = buff;
   iov[1].iov_len = sizeof(buff);
@@ -98,9 +98,9 @@ ssize_t Buffer::ReadFd(int fd, int *Errno) {
   if (len < 0) {
     *Errno = errno;
   } else if (static_cast<size_t>(len) <= writable) {/*buffer_足够的，则直接写入*/
-    writePos_ += len;
+    write_pos_ += len;
   } else {/*buffer_不够大，则将剩余的通过Append方法写入（append方法会自动扩容）*/
-    writePos_ = buffer_.size();
+    write_pos_ = buffer_.size();
     Append(buff, len - writable);
   }
   return len;
@@ -114,7 +114,7 @@ ssize_t Buffer::WriteFd(int fd, int *Errno) {
     *Errno = errno;
     return len;
   }
-  readPos_ += len;
+  read_pos_ += len;
   return len;
 }
 char *Buffer::BeginPtr_() {
@@ -126,13 +126,13 @@ const char *Buffer::BeginPtr_() const {
 void Buffer::MakeSpace_(size_t len) {
   //还可以写入的空间和已经读取的空间的总共空间还是小于len,则需要分配空间
   if (WritableBytes() + PrependableBytes() < len) {
-    buffer_.resize(writePos_ + len + 1);
+    buffer_.resize(write_pos_ + len + 1);
   } else {
     /*将还未读取的数据buffer[readOps,writeOps]，移动到buffer的开头，更新读写位置*/
     size_t readable = ReadableBytes();
-    std::copy(BeginPtr_() + readPos_, BeginPtr_() + writePos_, BeginPtr_());
-    readPos_ = 0;
-    writePos_ = readPos_ + readable;
+    std::copy(BeginPtr_() + read_pos_, BeginPtr_() + write_pos_, BeginPtr_());
+    read_pos_ = 0;
+    write_pos_ = read_pos_ + readable;
     assert(readable == ReadableBytes());
   }
 }

@@ -47,9 +47,9 @@ class Buffer {
 
   std::vector<char> buffer_;
   /*读取位置*/
-  std::atomic<size_t> readPos_;
+  std::atomic<size_t> read_pos_;
   /*写入位置*/
-  std::atomic<size_t> writePos_;
+  std::atomic<size_t> write_pos_;
 };
 
 #endif //WEBSERVER_SRC_BUFFER_H_

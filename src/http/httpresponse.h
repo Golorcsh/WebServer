@@ -12,40 +12,40 @@
 
 #include "../buffer/buffer.h"
 #include "../log/log.h"
-
+using namespace std;
 class HttpResponse {
  public:
   HttpResponse();
   ~HttpResponse();
 
-  void Init(const std::string &srcDir, std::string &path, bool isKeepAlive = false, int code = -1);
+  void Init(const string &srcDir, string &path, bool isKeepAlive = false, int code = -1);
   void MakeResponse(Buffer &buff);
   void UnmapFile();
   char *File();
   size_t FileLen() const;
-  void ErrorContent(Buffer &buff, std::string message);
+  void ErrorContent(Buffer &buff, string message);
   int Code() const { return code_; }
  private:
-  void AddStateLine_(Buffer &buff);
-  void AddHeader_(Buffer &buff);
-  void AddContent_(Buffer &buff);
+  void AddStateLine(Buffer &buff);
+  void AddHeader(Buffer &buff);
+  void AddContent(Buffer &buff);
 
-  void ErrorHtml_();
-  std::string GetFileType_();
+  void ErrorHtml();
+  string GetFileType();
 
   int code_;
-  bool isKeepAlive_;
+  bool is_keep_alive_;
 
-  std::string path_;
-  std::string srcDir_;
+  string path_;
+  string src_dir_;
 
-  char *mmFile_;
+  char *mm_file_;
   //用于存放文件的状态
-  struct stat mmFileStat_;
+  struct stat mm_file_stat_;
 
-  static const std::unordered_map<std::string, std::string> SUFFIX_TYPE;
-  static const std::unordered_map<int, std::string> CODE_STATUS;
-  static const std::unordered_map<int, std::string> CODE_PATH;
+  static const unordered_map<string, string> SUFFIX_TYPE;
+  static const unordered_map<int, string> CODE_STATUS;
+  static const unordered_map<int, string> CODE_PATH;
 };
 
 #endif //WEBSERVER_SRC_HTTP_HTTPRESPONSE_H_

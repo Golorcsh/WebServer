@@ -7,8 +7,8 @@
 #include <unordered_map>
 #include <fcntl.h>       // fcntl()
 #include <unistd.h>      // close()
-#include <assert.h>
-#include <errno.h>
+#include <cassert>
+#include <cerrno>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -39,7 +39,7 @@ class WebServer {
   void DealWrite_(HttpConn *client);
   void DealRead_(HttpConn *client);
 
-  void SendError_(int fd, const char *info);
+  static void SendError_(int fd, const char *info);
   void ExtentTime_(HttpConn *client);
   void CloseConn_(HttpConn *client);
 
@@ -55,16 +55,16 @@ class WebServer {
   bool openLinger_;
   int timeoutMS_;  /* 毫秒MS */
   bool isClose_;
-  int listenFd_;
+  int listenFd_{};
   char *srcDir_;
 
-  uint32_t listenEvent_;
-  uint32_t connEvent_;
+  uint32_t listenEvent_{};
+  uint32_t connEvent_{};
 
   //使用智能指针管理定时器堆
   std::unique_ptr<HeapTimer> timer_;
   //使用智能指针管理线程池
-  std::unique_ptr<ThreadPool> threadpool_;
+  std::unique_ptr<ThreadPool> thread_pool_;
   //使用智能指针管理封装好的epoll
   std::unique_ptr<Epoller> epoller_;
   //key为fd,value为对应的链接

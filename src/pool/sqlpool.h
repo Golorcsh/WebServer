@@ -12,9 +12,9 @@
 #include <thread>
 #include "../log/log.h"
 
-class SqlConnPool {
+class SqlPool {
  public:
-  static SqlConnPool *Instance();
+  static SqlPool *Instance();
 
   MYSQL *GetConn();
   void FreeConn(MYSQL *conn);
@@ -25,16 +25,16 @@ class SqlConnPool {
             const char *dbName, int connSize);
   void ClosePool();
  private:
-  SqlConnPool();
-  ~SqlConnPool();
+  SqlPool();
+  ~SqlPool();
 
-  int max_conn_;/*最大连接数*/
-  int use_count_;/*已使用连接数*/
-  int free_count_;/*空闲连接数*/
+  int max_conn_{};/*最大连接数*/
+  int use_count_{};/*已使用连接数*/
+  int free_count_{};/*空闲连接数*/
 
   std::queue<MYSQL *> conn_queue_;
   std::mutex mutex_;
-  sem_t semId_;
+  sem_t semId_{};
 };
 
 #endif //WEBSERVER_SRC_POOL_SQLPOOL_H_

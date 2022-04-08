@@ -8,9 +8,9 @@
 #include <string>
 #include <thread>
 #include <sys/time.h>
-#include <string.h>
-#include <stdarg.h>           // vastart va_end
-#include <assert.h>
+#include <cstring>
+#include <cstdarg>           // vastart va_end
+#include <cassert>
 #include <sys/stat.h>         //mkdir
 #include "blockdeque.h"
 #include "../buffer/buffer.h"
@@ -28,8 +28,8 @@ class Log {
 
   int GetLevel();
   void SetLevel(int level);
-  bool IsOpen() {
-    return isOpen_;
+  bool IsOpen() const {
+    return is_open_;
   }
  private:
   Log();
@@ -41,23 +41,18 @@ class Log {
   static const int LOG_NAME_LEN = 256;
   static const int MAX_LINES = 50000;
 
-  const char *path_;
-  const char *suffix_;
-
-  int max_line_;
-
+  const char *path_{};
+  const char *suffix_{};
+  int max_line_{};
   int line_count_;
-  int toDay_;
-  bool isOpen_;
-
+  int to_day_;
+  bool is_open_{};
   Buffer buff_;
-
-  int level_;
-
-  bool isAsync_;
+  int level_{};
+  bool is_async_;
   FILE *fp_;
   std::unique_ptr<BlockDeque<std::string>> deque_;
-  std::unique_ptr<std::thread> writeThread_;
+  std::unique_ptr<std::thread> write_thread_;
   std::mutex mutex_;
 };
 

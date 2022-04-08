@@ -4,8 +4,6 @@
 
 #include "httpresponse.h"
 
-using namespace std;
-
 const unordered_map<string, string> HttpResponse::SUFFIX_TYPE = {
     {".html", "text/html"},
     {".xml", "text/xml"},
@@ -42,57 +40,57 @@ const unordered_map<int, string> HttpResponse::CODE_PATH = {
 };
 HttpResponse::HttpResponse() {
   code_ = -1;
-  path_ = srcDir_ = "";
-  isKeepAlive_ = false;
-  mmFile_ = nullptr;
-  mmFileStat_ = {0};
+  path_ = src_dir_ = "";
+  is_keep_alive_ = false;
+  mm_file_ = nullptr;
+  mm_file_stat_ = {0};
 }
 HttpResponse::~HttpResponse() {
   UnmapFile();
 }
 void HttpResponse::Init(const string &srcDir, string &path, bool isKeepAlive, int code) {
-    assert(srcDir != "");
-  if (mmFile_) {
+  assert(srcDir != "");
+  if (mm_file_) {
     UnmapFile();
   }
   code_ = code;
-  isKeepAlive_ = isKeepAlive;
-    path_ = path;
-  srcDir_ = srcDir;
-  mmFile_ = nullptr;
-  mmFileStat_ = {0};
+  is_keep_alive_ = isKeepAlive;
+  path_ = path;
+  src_dir_ = srcDir;
+  mm_file_ = nullptr;
+  mm_file_stat_ = {0};
 }
 void HttpResponse::MakeResponse(Buffer &buff) {
   /*判断请求资源文件*/
   /*获取文件属性，并存放到mmFileStat_中*/
-  if (stat((srcDir_ + path_).data(), &mmFileStat_) < 0 || S_ISDIR(mmFileStat_.st_mode)) {
+  if (stat((src_dir_ + path_).data(), &mm_file_stat_) < 0 || S_ISDIR(mm_file_stat_.st_mode)) {
     /*获取文件属性，成功返回0|| 判断文件模式是否是目录*/
     code_ = 404;
-  } else if (!(mmFileStat_.st_mode & S_IROTH)) {
+  } else if (!(mm_file_stat_.st_mode & S_IROTH)) {
     /*判断是否有读取权限S_IROTH*/
     code_ = 403;
   } else if (code_ == -1) {
     /*默认值则为资源存在，有读取权限，状态码200*/
     code_ = 200;
   }
-  ErrorHtml_();
-  AddStateLine_(buff);
-  AddHeader_(buff);
-  AddContent_(buff);
+  ErrorHtml();
+  AddStateLine(buff);
+  AddHeader(buff);
+  AddContent(buff);
 }
 char *HttpResponse::File() {
-  return mmFile_;
+  return mm_file_;
 }
 size_t HttpResponse::FileLen() const {
-  return mmFileStat_.st_size;
+  return mm_file_stat_.st_size;
 }
-void HttpResponse::ErrorHtml_() {
+void HttpResponse::ErrorHtml() {
   if (CODE_PATH.count(code_) == 1) {
     path_ = CODE_PATH.find(code_)->second;
-    stat((srcDir_ + path_).data(), &mmFileStat_);
+    stat((src_dir_ + path_).data(), &mm_file_stat_);
   }
 }
-void HttpResponse::AddStateLine_(Buffer &buff) {
+void HttpResponse::AddStateLine(Buffer &buff) {
   string status;
   if (CODE_STATUS.count(code_) == 1) {
     status = CODE_STATUS.find(code_)->second;
@@ -103,42 +101,42 @@ void HttpResponse::AddStateLine_(Buffer &buff) {
   /*缓存中写入 响应状态行*/
   buff.Append("HTTP/1.1 " + to_string(code_) + " " + status + "\r\n");
 }
-void HttpResponse::AddHeader_(Buffer &buff) {
+void HttpResponse::AddHeader(Buffer &buff) {
   buff.Append("Connection: ");
-  if (isKeepAlive_) {
+  if (is_keep_alive_) {
     buff.Append("keep-alive\r\n");
     buff.Append("keep-alive: max=6, timeout=120\r\n");
   } else {
     buff.Append("close\r\n");
   }
-  buff.Append("Content-type: " + GetFileType_() + "\r\n");
+  buff.Append("Content-type: " + GetFileType() + "\r\n");
 }
-void HttpResponse::AddContent_(Buffer &buff) {
-  int srcFd = open((srcDir_ + path_).data(), O_RDONLY);
+void HttpResponse::AddContent(Buffer &buff) {
+  int srcFd = open((src_dir_ + path_).data(), O_RDONLY);
   if (srcFd < 0) {
     ErrorContent(buff, "File Not Found!");
     return;
   }
   /*将文件映射到内核中，提高文件的访问速度
    * MAP_PRIVATE 建立一个写入时拷贝的私有映射,即在内存映射区写入，不会影响到文件本身*/
-  LOG_DEBUG("file path %s", (srcDir_ + path_).data());
-  int *mmRet = (int *) mmap(0, mmFileStat_.st_size, PROT_READ, MAP_PRIVATE, srcFd, 0);
+  LOG_DEBUG("file path %s", (src_dir_ + path_).data());
+  int *mmRet = (int *) mmap(0, mm_file_stat_.st_size, PROT_READ, MAP_PRIVATE, srcFd, 0);
   if (*mmRet == -1) {
     /*映射失败*/
     ErrorContent(buff, "File Not Found!");
     return;
   }
-  mmFile_ = (char *) mmRet;
+  mm_file_ = (char *) mmRet;
   close(srcFd);
-  buff.Append("Content-length: " + to_string(mmFileStat_.st_size) + "\r\n\r\n");
+  buff.Append("Content-length: " + to_string(mm_file_stat_.st_size) + "\r\n\r\n");
 }
 void HttpResponse::UnmapFile() {
-  if (mmFile_) {
-    munmap(mmFile_, mmFileStat_.st_size);
-    mmFile_ = nullptr;
+  if (mm_file_) {
+    munmap(mm_file_, mm_file_stat_.st_size);
+    mm_file_ = nullptr;
   }
 }
-string HttpResponse::GetFileType_() {
+string HttpResponse::GetFileType() {
   /*判断文件类型*/
   /*找到最有一个'.'出现的位置*/
   string::size_type idx = path_.find_last_of('.');

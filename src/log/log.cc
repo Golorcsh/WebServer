@@ -8,20 +8,20 @@ using namespace std;
 
 Log::Log() {
   line_count_ = 0;
-  isAsync_ = false;
-  writeThread_ = nullptr;
+  is_async_ = false;
+  write_thread_ = nullptr;
   deque_ = nullptr;
-  toDay_ = 0;
+  to_day_ = 0;
   fp_ = nullptr;
 }
 Log::~Log() {
   /*若线程还在，则等待线程结束，并且关闭blockdeque_*/
-  if (writeThread_ && writeThread_->joinable()) {
-    while (!deque_->empty()) {
-      deque_->flush();
+  if (write_thread_ && write_thread_->joinable()) {
+    while (!deque_->Empty()) {
+      deque_->Flush();
     }
     deque_->Close();
-    writeThread_->join();
+    write_thread_->join();
   }
   /*关闭打开的文件*/
   if (fp_) {
@@ -40,20 +40,20 @@ void Log::SetLevel(int level) {
 }
 void Log::Init(int level = 1, const char *path, const char *suffix,
                int maxQueueCapacity) {
-  isOpen_ = true;
+  is_open_ = true;
   level_ = level;
   if (maxQueueCapacity > 0) {
-    isAsync_ = true;
+    is_async_ = true;
     if (!deque_) {
       /*创建deque_*/
       unique_ptr<BlockDeque<string>> newDeque(new BlockDeque<string>);
       deque_ = move(newDeque);
 
       unique_ptr<thread> newThread(new thread(FlushLogThread));
-      writeThread_ = move(newThread);
+      write_thread_ = move(newThread);
     }
   } else {
-    isAsync_ = false;
+    is_async_ = false;
   }
 
   line_count_ = 0;
@@ -67,7 +67,7 @@ void Log::Init(int level = 1, const char *path, const char *suffix,
   char fileName[LOG_NAME_LEN] = {0};
   snprintf(fileName, LOG_NAME_LEN - 1, "%s/%04d_%02d_%02d%s",
            path_, t.tm_year + 1900, t.tm_mon + 1, t.tm_mday, suffix_);
-  toDay_ = t.tm_mday;
+  to_day_ = t.tm_mday;
 
   {
     lock_guard<mutex> locker(mutex_);
@@ -99,7 +99,7 @@ void Log::Write(int level, const char *format, ...) {
   va_list va_list;
 
   /*日志日期，日志行数,若不是同一天则新建一个log文件*/
-  if (toDay_ != t.tm_mday || (line_count_ && (line_count_ % MAX_LINES == 0))) {
+  if (to_day_ != t.tm_mday || (line_count_ && (line_count_ % MAX_LINES == 0))) {
     unique_lock<mutex> locker(mutex_);
     locker.unlock();
 
@@ -107,9 +107,9 @@ void Log::Write(int level, const char *format, ...) {
     char tail[36] = {0};
     snprintf(tail, 36, "%04d_%02d_%02d", t.tm_year + 1900, t.tm_mon + 1, t.tm_mday);
 
-    if (toDay_ != t.tm_mday) {
+    if (to_day_ != t.tm_mday) {
       snprintf(newFile, LOG_NAME_LEN - 72, "%s/%s%s", path_, tail, suffix_);
-      toDay_ = t.tm_mday;
+      to_day_ = t.tm_mday;
       line_count_ = 0;
     } else {
       snprintf(newFile, LOG_NAME_LEN - 72, "%s/%s-%d%s", path_, tail, (line_count_ / MAX_LINES), suffix_);
@@ -142,8 +142,8 @@ void Log::Write(int level, const char *format, ...) {
     buff_.Append("\n\0", 2);
 
     /*异步的方式，将buff中的数据以string方式取出，并放到block队列中*/
-    if (isAsync_ && deque_ && !deque_->full()) {
-      deque_->push_back(buff_.RetrieveAllToStr());
+    if (is_async_ && deque_ && !deque_->Full()) {
+      deque_->PushBack(buff_.RetrieveAllToStr());
     } else {
       /*直接写入到long文件中*/
       fputs(buff_.Peek(), fp_);
@@ -167,21 +167,21 @@ void Log::AppendLogLevelTitle_(int level) {
   }
 }
 void Log::Flush() {
-  if (isAsync_) {
-    deque_->flush();
+  if (is_async_) {
+    deque_->Flush();
   }
   fflush(fp_);
 }
 void Log::AsyncWrite_() {
-  string str = "";
-  while (deque_->pop(str)) {
+  string str;
+  while (deque_->Pop(str)) {
     lock_guard<mutex> locker(mutex_);
     fputs(str.c_str(), fp_);
   }
 }
 Log *Log::Instance() {
-  static Log inst;
-  return &inst;
+  static Log instance;
+  return &instance;
 }
 void Log::FlushLogThread() {
   Log::Instance()->AsyncWrite_();
