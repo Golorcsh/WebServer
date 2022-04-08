@@ -42,31 +42,31 @@ class HttpRequest {
   void Init();
   bool Parse(Buffer &buff);
 
-  std::string Path() const;
-  std::string &Path();
-  std::string Method() const;
-  std::string Version() const;
-  std::string GetPost(const std::string &key) const;
-  std::string GetPost(const char *key) const;
+  string Path() const;
+  string &Path();
+  string Method() const;
+  string Version() const;
+  string GetPost(const string &key) const;
+  string GetPost(const char *key) const;
 
   bool IsKeepAlive() const;
  private:
-  bool ParseRequestLine(const std::string &line);
-  void ParseHeader_(const std::string &line);
-  void ParseBody_(const std::string &line);
+  bool ParseRequestLine(const string &line);
+  void ParseHeader_(const string &line);
+  void ParseBody_(const string &line);
 
   void ParsePath_();
   void ParsePost_();
   void ParseFromUrlencoded_();
-  static bool UserVerify(const std::string &name, const std::string &pwd, bool isLogin);
+  static bool UserVerify(const string &name, const string &pwd, bool isLogin);
 
   PARSE_STATE state_;
-  std::string method_, path_, version_, body_;
-  std::unordered_map<std::string, std::string> header_;
-  std::unordered_map<std::string, std::string> post_;
+  string method_, path_, version_, body_;
+  unordered_map<string, string> header_;
+  unordered_map<string, string> post_;
 
-  static const std::unordered_set<std::string> DEFAULT_HTML;
-  static const std::unordered_map<std::string, int> DEFAULT_HTML_TAG;
+  static const unordered_set<string> DEFAULT_HTML;
+  static const unordered_map<string, int> DEFAULT_HTML_TAG;
   static int ConvertHex(char ch);
 };
 
