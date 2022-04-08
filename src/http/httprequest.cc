@@ -160,22 +160,21 @@ void HttpRequest::ParseFromUrlencoded_() {
   }
 }
 bool HttpRequest::UserVerify(const string &name, const string &pwd, bool isLogin) {
-  if (name == "" || pwd == "") { return false; }
-  LOG_INFO("Verify name:%s pwd:%s", name.c_str(), pwd.c_str());
-  MYSQL *sql;
-  SqlConnRAII(&sql, SqlPool::Instance());
-  assert(sql);
+  if (name.empty() || pwd.empty()) { return false; }
+  LOG_INFO("Verify name:%s pwd:%s", name.c_str(), pwd.c_str())
+  MYSQL *sql = nullptr;
+  SqlConnRAII raii(&sql, SqlPool::Instance());
+  assert(sql != nullptr);
 
   bool flag = false;
-  unsigned int j = 0;
   char order[256] = {0};
-  MYSQL_FIELD *fields = nullptr;
+//  MYSQL_FIELD *fields = nullptr;
   MYSQL_RES *res = nullptr;
 
   if (!isLogin) { flag = true; }
   /*查询用户密码*/
   snprintf(order, 256, "SELECT username,password FROM user WHERE username='%s' LIMIT 1", name.c_str());
-  LOG_DEBUG("%s", order);
+  LOG_DEBUG("%s", order)
 
   /*0查询成功*/
   if (mysql_query(sql, order)) {
@@ -185,40 +184,40 @@ bool HttpRequest::UserVerify(const string &name, const string &pwd, bool isLogin
   /*取出查询结果集放到res*/
   res = mysql_store_result(sql);
   /*查询结果的列数*/
-  j = mysql_num_fields(res);
-  fields = mysql_fetch_fields(res);
+//  mysql_num_fields(res);
+//  fields = mysql_fetch_fields(res);
   /*获取一行数据*/
   while (MYSQL_ROW row = mysql_fetch_row(res)) {
-    LOG_DEBUG("MYSQL ROW:%s %s", row[0], row[1]);
+    LOG_DEBUG("MYSQL ROW:%s %s", row[0], row[1])
     string password(row[1]);
     /*登录行为*/
     if (isLogin) {
       if (pwd == password) { flag = true; }
       else {
         flag = false;
-        LOG_DEBUG("pwd error!");
+        LOG_DEBUG("pwd error!")
       }
     } else {
       flag = false;
-      LOG_DEBUG("user used!");
+      LOG_DEBUG("user used!")
     }
   }
   mysql_free_result(res);
 
   /*注册账号*/
   if (!isLogin && flag) {
-    LOG_DEBUG("register!");
+    LOG_DEBUG("register!")
     bzero(order, 256);
     snprintf(order, 256, "INSERT INTO user(username,password) VALUES('%s','%s')", name.c_str(), pwd.c_str());
-    LOG_DEBUG("%s", order);
+    LOG_DEBUG("%s", order)
     if (mysql_query(sql, order)) {
-      LOG_DEBUG("Insert error!");
+      LOG_DEBUG("Insert error!")
       flag = false;
     }
     flag = true;
   }
   SqlPool::Instance()->FreeConn(sql);
-  LOG_DEBUG("UserVerify success!");
+  LOG_DEBUG("UserVerify success!")
   return flag;
 }
 string HttpRequest::Path() const {

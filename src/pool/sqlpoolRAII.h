@@ -19,7 +19,7 @@ class SqlConnRAII {
 
   /*若获取了资源，当析构时执行释放资源*/
   ~SqlConnRAII() {
-    if (sql_) { sql_pool_->FreeConn(sql_); }
+    if (sql_ != nullptr) { sql_pool_->FreeConn(sql_); }
   }
  private:
   MYSQL *sql_;
