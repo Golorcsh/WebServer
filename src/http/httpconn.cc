@@ -13,9 +13,7 @@ HttpConn::HttpConn() {
   addr_ = {0};
   is_close_ = true;
 }
-HttpConn::~HttpConn() {
-  Close();
-}
+HttpConn::~HttpConn() { Close(); }
 void HttpConn::Init(int sockFd, const sockaddr_in &addr) {
   assert(sockFd > 0);
   user_count_++;
@@ -24,7 +22,8 @@ void HttpConn::Init(int sockFd, const sockaddr_in &addr) {
   write_buff_.RetrieveAll();
   read_buff_.RetrieveAll();
   is_close_ = false;
-  LOG_INFO("Client[%d](%s:%d) in ,user_count_:%d", fd_, GetIP(), GetPort(), (int) user_count_);
+  LOG_INFO("Client[%d](%s:%d) in ,user_count_:%d", fd_, GetIP(), GetPort(),
+           (int)user_count_);
 }
 void HttpConn::Close() {
   response_.UnmapFile();
@@ -32,21 +31,16 @@ void HttpConn::Close() {
     is_close_ = true;
     user_count_--;
     close(fd_);
-    LOG_INFO("Client[%d](%s:%d) quit, UserCount:%d", fd_, GetIP(), GetPort(), (int) user_count_);
+    LOG_INFO("Client[%d](%s:%d) quit, UserCount:%d", fd_, GetIP(), GetPort(),
+             (int)user_count_);
   }
 }
-int HttpConn::GetFd() const {
-  return fd_;
-}
+int HttpConn::GetFd() const { return fd_; }
 struct sockaddr_in HttpConn::GetAddr() const {
   return addr_;
 }
-const char *HttpConn::GetIP() const {
-  return inet_ntoa(addr_.sin_addr);
-}
-int HttpConn::GetPort() const {
-  return addr_.sin_port;
-}
+const char *HttpConn::GetIP() const { return inet_ntoa(addr_.sin_addr); }
+int HttpConn::GetPort() const { return addr_.sin_port; }
 ssize_t HttpConn::Read(int *saveErrno) {
   /*从fd_中读取内容到readBuff中*/
   ssize_t len = -1;
@@ -67,16 +61,18 @@ ssize_t HttpConn::Write(int *saveErrno) {
       *saveErrno = errno;
       break;
     }
-    if (iov_[0].iov_len + iov_[1].iov_len == 0) { break; } /* 传输结束 */
+    if (iov_[0].iov_len + iov_[1].iov_len == 0) {
+      break;
+    } /* 传输结束 */
     else if (static_cast<size_t>(len) > iov_[0].iov_len) {
-      iov_[1].iov_base = (uint8_t *) iov_[1].iov_base + (len - iov_[0].iov_len);
+      iov_[1].iov_base = (uint8_t *)iov_[1].iov_base + (len - iov_[0].iov_len);
       iov_[1].iov_len -= (len - iov_[0].iov_len);
       if (iov_[0].iov_len) {
         write_buff_.RetrieveAll();
         iov_[0].iov_len = 0;
       }
-    } else {/*若写入数据量小于iov_[0]说明数据值使用了第一块，并且写入的数据小于第一块，第一块还有没写入更新写入*/
-      iov_[0].iov_base = (uint8_t *) iov_[0].iov_base + len;
+    } else { /*若写入数据量小于iov_[0]说明数据值使用了第一块，并且写入的数据小于第一块，第一块还有没写入更新写入*/
+      iov_[0].iov_base = (uint8_t *)iov_[0].iov_base + len;
       iov_[0].iov_len -= len;
       write_buff_.Retrieve(len);
     }
@@ -93,6 +89,7 @@ bool HttpConn::Process() {
     response_.Init(src_dir_, request_.Path(), request_.IsKeepAlive(), 200);
   } else {
     response_.Init(src_dir_, request_.Path(), false, 400);
+    return false;
   }
 
   /*将产生返回内容写入到writeBuff中*/
@@ -109,6 +106,7 @@ bool HttpConn::Process() {
     iov_[1].iov_len = response_.FileLen();
     iov_cnt_ = 2;
   }
-  LOG_DEBUG("filesize:%d ,%d to %d", response_.FileLen(), iov_cnt_, ToWriteBytes());
+  LOG_DEBUG("filesize:%d ,%d to %d", response_.FileLen(), iov_cnt_,
+            ToWriteBytes());
   return true;
 }

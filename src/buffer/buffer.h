@@ -4,15 +4,15 @@
 
 #ifndef WEBSERVER_SRC_BUFFER_H_
 #define WEBSERVER_SRC_BUFFER_H_
-#include <cstring>   //perror
-#include <iostream>
-#include <unistd.h>  // write
-#include <sys/uio.h> //readv
-#include <vector> //readv
-#include <atomic>
 #include <assert.h>
+#include <atomic>
+#include <cstring> //perror
+#include <iostream>
+#include <sys/uio.h> //readv
+#include <unistd.h>  // write
+#include <vector>    //readv
 class Buffer {
- public:
+public:
   Buffer(int initBuffSize = 1024);
   ~Buffer() = default;
 
@@ -40,7 +40,8 @@ class Buffer {
 
   ssize_t ReadFd(int fd, int *Errno);
   ssize_t WriteFd(int fd, int *Errno);
- private:
+
+private:
   char *BeginPtr_();
   const char *BeginPtr_() const;
   void MakeSpace_(size_t len);
@@ -52,4 +53,4 @@ class Buffer {
   std::atomic<size_t> write_pos_;
 };
 
-#endif //WEBSERVER_SRC_BUFFER_H_
+#endif // WEBSERVER_SRC_BUFFER_H_

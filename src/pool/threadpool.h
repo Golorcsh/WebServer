@@ -5,14 +5,15 @@
 #ifndef WEBSERVER_SRC_POOL_THREADPOOL_H_
 #define WEBSERVER_SRC_POOL_THREADPOOL_H_
 
-#include <mutex>
 #include <condition_variable>
+#include <functional>
+#include <mutex>
 #include <queue>
 #include <thread>
-#include <functional>
 class ThreadPool {
- public:
-  explicit ThreadPool(size_t threadCount = 8) : pool_(std::make_shared<Pool>()) {
+public:
+  explicit ThreadPool(size_t threadCount = 8)
+      : pool_(std::make_shared<Pool>()) {
     assert(threadCount > 0);
     /*使用lambada表达式做为worker函数*/
     /*TODO 改写单独的worker函数*/
@@ -27,8 +28,10 @@ class ThreadPool {
             locker.unlock();
             task();
             locker.lock();
-          } else if (pool->is_closed_) break;
-          else pool->cond.wait(locker);
+          } else if (pool->is_closed_)
+            break;
+          else
+            pool->cond.wait(locker);
         }
       }).detach();
     }
@@ -41,18 +44,18 @@ class ThreadPool {
         std::lock_guard<std::mutex> locker(pool_->mtx);
         pool_->is_closed_ = true;
       }
-      pool_->cond.notify_all();/*唤醒所有线程，让线程自行销毁*/
+      pool_->cond.notify_all(); /*唤醒所有线程，让线程自行销毁*/
     }
   }
-  template<typename F>
-  void AddTask(F &&task) {
+  template <typename F> void AddTask(F &&task) {
     {
       std::lock_guard<std::mutex> locker(pool_->mtx);
       pool_->tasks.emplace(std::forward<F>(task));
     }
-    pool_->cond.notify_one();/*唤醒线程执行任务*/
+    pool_->cond.notify_one(); /*唤醒线程执行任务*/
   }
- private:
+
+private:
   struct Pool {
     std::mutex mtx;
     std::condition_variable cond;
@@ -61,4 +64,4 @@ class ThreadPool {
   };
   std::shared_ptr<Pool> pool_;
 };
-#endif //WEBSERVER_SRC_POOL_THREADPOOL_H_
+#endif // WEBSERVER_SRC_POOL_THREADPOOL_H_
