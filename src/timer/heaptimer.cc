@@ -3,8 +3,11 @@
 //
 #include "heaptimer.h"
 
+/*!
+ * @brief 堆的上浮操作,用于插入节点后，判断当前节点是否需要上浮
+ * @param i
+ */
 void HeapTimer::Siftup(size_t i) {
-  /*堆的上浮操作,用于插入节点后，判断当前节点是否需要上浮*/
   assert(i >= 0 && i < heap_.size());
   size_t father = (i - 1) / 2; /*获得父节点*/
   while (father >= 0) {
@@ -15,6 +18,11 @@ void HeapTimer::Siftup(size_t i) {
     father = (i - 1) / 2; /*更新新的父节点*/
   }
 }
+/*!
+ * @brief 交换两个节点，更新索引
+ * @param i
+ * @param j
+ */
 void HeapTimer::SwapNode(size_t i, size_t j) {
   assert(i >= 0 && i < heap_.size());
   assert(j >= 0 && j < heap_.size());
@@ -23,8 +31,14 @@ void HeapTimer::SwapNode(size_t i, size_t j) {
   ref_[heap_[i].id] = i;
   ref_[heap_[j].id] = j;
 }
+/*!
+ * @brief 堆的下浮操作,用于修改节点后，判断当前节点是否需要下浮
+ * @param index
+ * @param n
+ * @return
+ */
 bool HeapTimer::Siftdown(size_t index, size_t n) {
-  /*堆的下浮操作,用于修改节点后，判断当前节点是否需要下浮*/
+  /*
   assert(index >= 0 && index < heap_.size());
   assert(n >= 0 && n <= heap_.size()); /*小于等于考虑到删除元素时需要缩小大小*/
   size_t i = index;
@@ -73,6 +87,10 @@ void HeapTimer::doWork(int id) {
   node.cb();
   Del(i);
 }
+/*!
+ * @brief 删除结点
+ * @param i
+ */
 void HeapTimer::Del(size_t i) {
   /*删除指定位置的节点*/
   assert(!heap_.empty() && i >= 0 && i < heap_.size());
@@ -90,16 +108,22 @@ void HeapTimer::Del(size_t i) {
   ref_.erase(heap_.back().id);
   heap_.pop_back();
 }
+/*!
+ * @brief 调整指定id的节点
+ * @param id
+ * @param timeout
+ */
 void HeapTimer::Adjust(int id, int timeout) {
-  /*调整指定id的节点*/
   assert(!heap_.empty() && ref_.count(id) != 0);
   heap_[ref_[id]].expires = Clock::now() + MS(timeout);
   /*由于是新设置的时间，只会更大，不会更小，因此只需下浮*/
   Siftdown(ref_[id], heap_.size());
 }
 
+/*!
+ * @brief 删除过期节点
+ */
 void HeapTimer::Tick() {
-  /*删除过期节点*/
   if (heap_.empty()) {
     return;
   }
@@ -111,15 +135,24 @@ void HeapTimer::Tick() {
     Pop();
   }
 }
+/*!
+ * @brief 出堆
+ */
 void HeapTimer::Pop() {
   assert(!heap_.empty());
   Del(0);
 }
+/*!
+ * @brief 清除堆
+ */
 void HeapTimer::clear() {
   ref_.clear();
   heap_.clear();
 }
-
+/*!
+ * @brief获得过期时间ms
+ * @return
+ */
 int HeapTimer::GetNextTick() {
   Tick();
   size_t res = -1;
